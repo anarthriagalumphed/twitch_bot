@@ -114,4 +114,4 @@ function sendFollowReminder() {
 }
 
 // Set interval untuk memanggil fungsi sendFollowReminder setiap 5 menit (300000 milidetik)
-setInterval(sendFollowReminder, 30000); // Mengirim setiap 5 menit
+setInterval(sendFollowReminder, 300000); // Mengirim setiap 5 menit
