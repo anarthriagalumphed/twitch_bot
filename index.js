@@ -1,5 +1,7 @@
 const tmi = require('tmi.js');
 const say = require('say');
+const axios = require('axios'); // Tambahkan ini
+
 require('dotenv').config();
 
 const opts = {
@@ -17,7 +19,7 @@ client.on('connected', onConnected);
 
 client.connect();
 
-const blockedWords = ['fuck', 'asu']; // Daftar kata yang ingin diblokir
+const blockedWords = ['fuck', 'asu'];
 let isStreaming = false;
 
 function onConnected(addr, port) {
@@ -31,7 +33,6 @@ function onMessage(channel, tags, message, self) {
         );
 
         if (containsBlockedWord) {
-            // Jika pesan mengandung kata yang diblokir, hapus pesan tersebut
             client
                 .deletemessage(channel, tags.id)
                 .then((data) => {
@@ -76,35 +77,41 @@ const reminderMessages = [
     'Jangan lupa follow Twitch!',
     'Jangan lupa follow Instagram!',
     'Jangan lupa subscribe YouTube!',
-    // Tambahkan pesan-pesan lain sesuai kebutuhan
 ];
 
 let currentReminderIndex = 0;
 
 function sendFollowReminder() {
-    if (isStreaming) {
-        const channel = 'anarthriagalumphed';
-        const message = reminderMessages[currentReminderIndex];
+    // Ganti dengan pengecekan langsung ke Twitch API menggunakan axios
+    const clientId = process.env.TWITCH_CLIENT_ID;
+    const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+    const channelName = 'anarthriagalumphed';
 
-        // Kirim pesan ke chat
-        client.say(channel, `${message}`);
+    const apiUrl = `https://api.twitch.tv/helix/streams?user_login=${channelName}`;
+    const headers = {
+        'Client-ID': process.env.TWITCH_CLIENT_ID,
+        'Authorization': `Bearer ${process.env.OAUTH_TOKEN}`,
+    };
 
-        // Ganti indeks untuk pesan selanjutnya
-        currentReminderIndex = (currentReminderIndex + 1) % reminderMessages.length;
-    }
+    axios.get(apiUrl, { headers })
+        .then(response => {
+            const data = response.data;
+            if (data.data && data.data.length > 0) {
+                // Channel sedang live
+                const channel = 'anarthriagalumphed';
+                const message = reminderMessages[currentReminderIndex];
+
+                // Kirim pesan ke chat
+                client.say(channel, `${message}`);
+
+                // Ganti indeks untuk pesan selanjutnya
+                currentReminderIndex = (currentReminderIndex + 1) % reminderMessages.length;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
 }
 
 // Set interval untuk memanggil fungsi sendFollowReminder setiap 5 menit (300000 milidetik)
-setInterval(sendFollowReminder, 60000); // Mengirim setiap 5 menit
-
-// Menyimak status streaming
-client.on('streaming', (data) => {
-    isStreaming = data;
-    console.log(`Bot sedang streaming: ${isStreaming}`);
-});
-
-// Menyimak status offline
-client.on('streaming-offline', () => {
-    isStreaming = false;
-    console.log(`Bot sedang offline`);
-});
+setInterval(sendFollowReminder, 30000); // Mengirim setiap 5 menit
