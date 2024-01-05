@@ -16,6 +16,7 @@ let isLive = false; // Menyimpan status live stream
 
 client.on('message', onMessage);
 client.on('connected', onConnected);
+client.on('presence', onPresence);
 
 client.connect();
 
@@ -23,6 +24,16 @@ const blockedWords = ['fuck', 'asu'];  // Daftar kata yang ingin diblokir
 
 function onConnected(addr, port) {
     console.log(`Bot connected ${addr} y ${port}`);
+}
+
+function onPresence(channel, username, type, self) {
+    if (type === 'stream') {
+        console.log(`Channel is now live!`);
+        isLive = true;
+    } else if (type === 'streamOff') {
+        console.log(`Channel is now offline.`);
+        isLive = false;
+    }
 }
 
 function onMessage(channel, tags, message, self) {
@@ -70,14 +81,29 @@ function onMessage(channel, tags, message, self) {
     // Add more commands as needed using additional else if statements
 }
 
-// Event handler for when the stream goes online
-client.on('stream', (channel, username, viewerCount) => {
-    console.log(`Channel is now live with ${viewerCount} viewers!`);
-    isLive = true;
-});
+// Set interval untuk memanggil fungsi sendFollowReminder setiap 5 menit (300000 milidetik)
+setInterval(() => {
+    if (isLive) {
+        sendFollowReminder();
+    }
+}, 300000);
 
-// Event handler for when the stream goes offline
-client.on('streamOff', (channel, username) => {
-    console.log(`Channel is now offline.`);
-    isLive = false;
-});
+const reminderMessages = [
+    'Jangan lupa follow Twitch!',
+    'Jangan lupa follow Instagram!',
+    'Jangan lupa subscribe YouTube!',
+    // Tambahkan pesan-pesan lain sesuai kebutuhan
+];
+
+let currentReminderIndex = 0;
+
+function sendFollowReminder() {
+    const channel = 'anarthriagalumphed';
+    const message = reminderMessages[currentReminderIndex];
+
+    // Kirim pesan ke chat
+    client.say(channel, `${message}`);
+
+    // Ganti indeks untuk pesan selanjutnya
+    currentReminderIndex = (currentReminderIndex + 1) % reminderMessages.length;
+}
