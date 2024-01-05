@@ -12,6 +12,10 @@ const opts = {
 
 const client = new tmi.client(opts);
 
+let isLive = false; // Menyimpan status live stream
+let lastLiveCheck = 0; // Menyimpan waktu terakhir cek status live stream
+const liveCheckInterval = 5 * 60 * 1000; // Interval cek status live stream (5 menit)
+
 client.on('message', onMessage);
 client.on('connected', onConnected);
 
@@ -46,50 +50,57 @@ function onMessage(channel, tags, message, self) {
     }
 
     // Handle command messages or other logic as needed
-
-
-
-
-
-
     const args = message.slice(1).split(' ');
     const command = args.shift().toLowerCase();
 
     if (command === 'ping') {
-        // Ganti baris ini agar pesan balasan menggunakan nama bot
-        client.say(channel, `@${tags.username}, pong: ${args.join(' ')}`);
-        say.speak(args.join(' '));
+        if (isLive) {
+            console.log('Channel is currently streaming, not responding to ping.');
+        } else {
+            client.say(channel, `@${tags.username}, pong: ${args.join(' ')} (Channel offline)`);
+            say.speak(args.join(' '));
+        }
     } else if (command === 'hello') {
         client.say(channel, `Hello, @${tags.username}!`);
     } else if (command === 'greet') {
         client.say(channel, `Greetings, @${tags.username}!`);
     } else if (command === 'info') {
-        client.say(channel, `I am a simple bot created by Anarthriagalumphed. `);
+        client.say(channel, `I am a simple bot created by Anarthriagalumphed.`);
     } else if (command === 'commands') {
         client.say(channel, `Available commands: !ping, !hello, !greet, !info, !commands`);
     }
     // Add more commands as needed using additional else if statements
 }
 
-const reminderMessages = [
-    'Jangan lupa follow Twitch!',
-    'Jangan lupa follow Instagram!',
-    'Jangan lupa subscribe YouTube!',
-    // Tambahkan pesan-pesan lain sesuai kebutuhan
-];
-
-let currentReminderIndex = 0;
-
 function sendFollowReminder() {
     const channel = 'anarthriagalumphed';
     const message = reminderMessages[currentReminderIndex];
 
-    // Kirim pesan ke chat
-    client.say(channel, `${message}`);
+    // Kirim pesan ke chat jika channel sedang live
+    if (isLive) {
+        client.say(channel, `${message}`);
+    }
 
-    // Ganti indeks untuk pesan selanjutnya
     currentReminderIndex = (currentReminderIndex + 1) % reminderMessages.length;
 }
 
 // Set interval untuk memanggil fungsi sendFollowReminder setiap 5 menit (300000 milidetik)
 setInterval(sendFollowReminder, 60000);
+
+// Set interval untuk memeriksa status live stream setiap 5 menit
+setInterval(checkLiveStatus, liveCheckInterval);
+
+function checkLiveStatus() {
+    // Ambil status live stream dari Twitch API (misalnya dengan menggunakan Twitch API Client atau HTTP request)
+    // Contoh sederhana:
+    const currentTime = Date.now();
+    
+    if (currentTime - lastLiveCheck >= liveCheckInterval) {
+        lastLiveCheck = currentTime;
+
+        // Implementasi untuk memeriksa status live stream
+        // Misalnya, Anda dapat menggunakan Twitch API untuk mendapatkan status live stream
+        // dengan melakukan HTTP request ke https://api.twitch.tv/helix/streams?user_login=channelName
+        // Pastikan untuk menetapkan nilai isLive berdasarkan hasil pengecekan status live stream
+    }
+}
