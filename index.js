@@ -95,7 +95,7 @@ function sendFollowReminder() {
 }
 
 // Set interval untuk memanggil fungsi sendFollowReminder setiap 5 menit (300000 milidetik)
-setInterval(sendFollowReminder, 300000); // Mengirim setiap 5 menit
+setInterval(sendFollowReminder, 60000); // Mengirim setiap 5 menit
 
 // Menyimak status streaming
 client.on('streaming', (data) => {
