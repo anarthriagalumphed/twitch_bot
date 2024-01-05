@@ -13,8 +13,6 @@ const opts = {
 const client = new tmi.client(opts);
 
 let isLive = false; // Menyimpan status live stream
-let lastLiveCheck = 0; // Menyimpan waktu terakhir cek status live stream
-const liveCheckInterval = 5 * 60 * 1000; // Interval cek status live stream (5 menit)
 
 client.on('message', onMessage);
 client.on('connected', onConnected);
@@ -55,10 +53,10 @@ function onMessage(channel, tags, message, self) {
 
     if (command === 'ping') {
         if (isLive) {
-            console.log('Channel is currently streaming, not responding to ping.');
-        } else {
-            client.say(channel, `@${tags.username}, pong: ${args.join(' ')} (Channel offline)`);
+            client.say(channel, `@${tags.username}, pong: ${args.join(' ')}`);
             say.speak(args.join(' '));
+        } else {
+            console.log('Channel is currently offline, not responding to ping.');
         }
     } else if (command === 'hello') {
         client.say(channel, `Hello, @${tags.username}!`);
@@ -72,35 +70,14 @@ function onMessage(channel, tags, message, self) {
     // Add more commands as needed using additional else if statements
 }
 
-function sendFollowReminder() {
-    const channel = 'anarthriagalumphed';
-    const message = reminderMessages[currentReminderIndex];
+// Event handler for when the stream goes online
+client.on('stream', (channel, username, viewerCount) => {
+    console.log(`Channel is now live with ${viewerCount} viewers!`);
+    isLive = true;
+});
 
-    // Kirim pesan ke chat jika channel sedang live
-    if (isLive) {
-        client.say(channel, `${message}`);
-    }
-
-    currentReminderIndex = (currentReminderIndex + 1) % reminderMessages.length;
-}
-
-// Set interval untuk memanggil fungsi sendFollowReminder setiap 5 menit (300000 milidetik)
-setInterval(sendFollowReminder, 60000);
-
-// Set interval untuk memeriksa status live stream setiap 5 menit
-setInterval(checkLiveStatus, liveCheckInterval);
-
-function checkLiveStatus() {
-    // Ambil status live stream dari Twitch API (misalnya dengan menggunakan Twitch API Client atau HTTP request)
-    // Contoh sederhana:
-    const currentTime = Date.now();
-    
-    if (currentTime - lastLiveCheck >= liveCheckInterval) {
-        lastLiveCheck = currentTime;
-
-        // Implementasi untuk memeriksa status live stream
-        // Misalnya, Anda dapat menggunakan Twitch API untuk mendapatkan status live stream
-        // dengan melakukan HTTP request ke https://api.twitch.tv/helix/streams?user_login=channelName
-        // Pastikan untuk menetapkan nilai isLive berdasarkan hasil pengecekan status live stream
-    }
-}
+// Event handler for when the stream goes offline
+client.on('streamOff', (channel, username) => {
+    console.log(`Channel is now offline.`);
+    isLive = false;
+});
